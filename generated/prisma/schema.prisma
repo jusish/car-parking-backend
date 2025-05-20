@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PARKING_ATTENDANT
+  ADMIN
+
+  @@map(name: "role")
+}
+
+enum ParkingSlotStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+  RESERVED
+
+  @@map(name: "parkingSlot_status")
+}
+
+enum VehicleType {
+  CAR
+  BIKE
+  TRUCK
+  BUS
+
+  @@map(name: "vehicle_type")
+}
+
+enum ParkingSlotSize {
+  SMALL
+  MEDIUM
+  LARGE
+
+  @@map(name: "parkingSlot_size")
+}
+
+enum ParkingSlotOrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+
+  @@map(name: "parkingSlot_order_status")
+}
+
+enum ParkingCategory {
+  SMALL
+  MEDIUM
+  LARGE
+
+  @@map(name: "parking_category")
+}
+
+model User {
+  id                            String             @id @default(uuid())
+  firstName                     String
+  lastName                      String
+  email                         String             @unique
+  password                      String
+  createdAt                     DateTime           @default(now())
+  updatedAt                     DateTime           @default(now())
+  role                          Role               @default(PARKING_ATTENDANT)
+  emailVerified                 Boolean            @default(false)
+  emailVerificationToken        String?
+  emailVerificationTokenExpires DateTime?
+  resetPasswordToken            String?
+  resetPasswordTokenExpires     DateTime?
+  vehicles                      Vehicle[]
+  parkingSlotOrders             ParkingSlotOrder[]
+
+  @@map("users")
+}
+
+model Vehicle {
+  id                 String             @id @default(uuid())
+  vehiclePlateNumber String             @unique
+  vehicleType        VehicleType        @default(CAR)
+  vehicleColor       String
+  vehicleBrand       String
+  vehicleModel       String
+  vehicleYear        Int
+  vehicleOwnerId     String
+  vehicleOwner       User               @relation(fields: [vehicleOwnerId], references: [id], onDelete: Cascade)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @default(now())
+  parkingSlotOrder   ParkingSlotOrder[]
+
+  @@map("vehicles")
+}
+
+model Parking {
+  id           String          @id @default(uuid())
+  maxSlots     Int
+  slotCategory ParkingCategory
+  pricePerHour Float
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @default(now())
+  parkingSlots ParkingSlot[]
+
+  @@map("parkings")
+}
+
+model ParkingSlot {
+  id                String             @id @default(uuid())
+  parkingId         String
+  parking           Parking            @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+  parkingSlotNumber String
+  parkingSlotSize   ParkingSlotSize    @default(SMALL)
+  parkingSlotStatus ParkingSlotStatus  @default(AVAILABLE)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @default(now())
+  parkingSlotOrders ParkingSlotOrder[]
+
+  @@map("parking_slots")
+}
+
+model ParkingSlotOrder {
+  id                     String                 @id @default(uuid())
+  parkingSlotId          String
+  parkingSlot            ParkingSlot            @relation(fields: [parkingSlotId], references: [id], onDelete: Cascade)
+  vehicleId              String
+  parkingSlotCustomerId  String?
+  parkingSlotCustomer    User?                  @relation(fields: [parkingSlotCustomerId], references: [id], onDelete: Cascade)
+  parkingSlotVehicleId   String?
+  parkingSlotVehicle     Vehicle?               @relation(fields: [parkingSlotVehicleId], references: [id], onDelete: Cascade)
+  pricePerHour           Float
+  hours                  Int
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @default(now())
+  parkingSlotOrderStatus ParkingSlotOrderStatus @default(PENDING)
+
+  @@map("parking_slot_orders")
+}
