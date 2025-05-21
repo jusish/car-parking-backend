@@ -12,41 +12,57 @@ export class ParkingSlotOrderController {
     next: NextFunction
   ) {
     try {
-      const { parkingSlotId, vehiclePlateNumber } = req.body;
+      const { slotId, vehiclePlateNumber } = req.body;
+      
+      // Check if required fields are present
+      if (!slotId || !vehiclePlateNumber) {
+        return ServerResponse.error(res, "Missing required fields: slotId or vehiclePlateNumber");
+      }
+
       const user = await prisma.user.findUnique({
         where: { id: req.user?.id as string },
       });
+
+      if (!user) {
+        return ServerResponse.notFound(res, "User not found");
+      }
+
+      // Find parking slot using slotId from request body (not parkingSlotId)
       const parkingSlot = await prisma.parkingSlot.findUnique({
-        where: { id: parkingSlotId },
+        where: { id: slotId },
         include: { parking: true },
       });
+
       if (!parkingSlot) {
-        ServerResponse.notFound(res, "ParkingSlot not found");
-        return;
+        return ServerResponse.notFound(res, "ParkingSlot not found");
       }
+
       const vehicle = await prisma.vehicle.findUnique({
         where: { vehiclePlateNumber: vehiclePlateNumber },
       });
+
       if (!vehicle) {
-        ServerResponse.notFound(res, "Vehicle not found");
-        return;
+        return ServerResponse.notFound(res, "Vehicle not found");
       }
+
       const parkingSlotOrder = await prisma.parkingSlotOrder.create({
         data: {
           parkingSlotCustomerId: req.user?.id,
-          parkingSlotId: parkingSlotId,
+          parkingSlotId: slotId, // Use slotId from request body
           parkingSlotVehicleId: vehicle.id,
           vehicleId: vehicle.id,
           pricePerHour: parkingSlot.parking.pricePerHour,
           hours: 0,
         },
       });
+
       await prisma.parkingSlot.update({
-        where: { id: parkingSlotId },
+        where: { id: slotId }, // Use slotId from request body
         data: {
           parkingSlotStatus: ParkingSlotStatus.OCCUPIED,
         },
       });
+
       await sendMail(
         {
           name: user?.firstName + " " + user?.lastName,
@@ -57,6 +73,7 @@ export class ParkingSlotOrderController {
         "ParkingSlot Order Confirmation",
         "parkingSlot-request-confirmation"
       );
+
       ServerResponse.success(
         res,
         "ParkingSlot order created successfully",

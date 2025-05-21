@@ -3,7 +3,16 @@
   "info": {
     "version": "1.0.0",
     "title": "NE NodeJS Rest API",
-    "description": ""
+    "description": "A REST API for managing parking slots, vehicles, users, and authentication"
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
   },
   "servers": [
     {
@@ -13,21 +22,77 @@
   "tags": [
     {
       "name": "Auth",
-      "description": "Authentication endpoints"
+      "description": "Endpoints for user authentication and registration"
     },
     {
       "name": "Users",
-      "description": "Users endpoints"
+      "description": "Endpoints for managing user data"
+    },
+    {
+      "name": "ParkingSlot Orders",
+      "description": "Endpoints for managing parking slot orders"
+    },
+    {
+      "name": "ParkingSlots",
+      "description": "Endpoints for managing parking slots"
+    },
+    {
+      "name": "Vehicles",
+      "description": "Endpoints for managing vehicles"
+    },
+    {
+      "name": "Parking",
+      "description": "Endpoints for managing parking areas"
     }
   ],
   "paths": {
     "/auth/login": {
       "post": {
         "tags": ["Auth"],
-        "description": "",
+        "description": "Logs in a user with email and password, returns a JWT token",
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Login successful"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "jwt.token.here"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid email or password"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [],
@@ -37,13 +102,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "example": "any"
-                  },
-                  "password": {
-                    "example": "any"
-                  }
-                }
+                  "email": { "type": "string", "example": "user@example.com" },
+                  "password": { "type": "string", "example": "Password123!" }
+                },
+                "required": ["email", "password"]
               }
             }
           }
@@ -53,10 +115,53 @@
     "/auth/register": {
       "post": {
         "tags": ["Auth"],
-        "description": "",
+        "description": "Registers a new user",
         "responses": {
-          "default": {
-            "description": ""
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "User registered successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "firstName": { "type": "string", "example": "John" },
+                        "lastName": { "type": "string", "example": "Doe" },
+                        "email": {
+                          "type": "string",
+                          "example": "user@example.com"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Email already exists"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [],
@@ -66,19 +171,12 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "firstName": {
-                    "example": "any"
-                  },
-                  "lastName": {
-                    "example": "any"
-                  },
-                  "email": {
-                    "example": "any"
-                  },
-                  "password": {
-                    "example": "any"
-                  }
-                }
+                  "firstName": { "type": "string", "example": "John" },
+                  "lastName": { "type": "string", "example": "Doe" },
+                  "email": { "type": "string", "example": "user@example.com" },
+                  "password": { "type": "string", "example": "Password123!" }
+                },
+                "required": ["firstName", "lastName", "email", "password"]
               }
             }
           }
@@ -88,10 +186,41 @@
     "/auth/send-reset-password-email": {
       "post": {
         "tags": ["Auth"],
-        "description": "",
+        "description": "Sends a password reset email",
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Password reset email sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Password reset email sent"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Email not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Email not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [],
@@ -101,10 +230,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "example": "any"
-                  }
-                }
+                  "email": { "type": "string", "example": "user@example.com" }
+                },
+                "required": ["email"]
               }
             }
           }
@@ -114,20 +242,49 @@
     "/auth/reset-password/{token}": {
       "post": {
         "tags": ["Auth"],
-        "description": "",
+        "description": "Resets user password using a token",
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "reset-token" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Password reset successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Password reset successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid or expired token"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [],
@@ -137,10 +294,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "password": {
-                    "example": "any"
-                  }
-                }
+                  "password": { "type": "string", "example": "NewPassword123!" }
+                },
+                "required": ["password"]
               }
             }
           }
@@ -150,20 +306,49 @@
     "/auth/verify-email/{token}": {
       "post": {
         "tags": ["Auth"],
-        "description": "",
+        "description": "Verifies user email using a token",
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "verify-token" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Email verified successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid or expired token"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [],
@@ -173,10 +358,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "example": "any"
-                  }
-                }
+                  "email": { "type": "string", "example": "user@example.com" }
+                },
+                "required": ["email"]
               }
             }
           }
@@ -186,10 +370,41 @@
     "/auth/send-verification-email": {
       "post": {
         "tags": ["Auth"],
-        "description": "",
+        "description": "Sends an email verification link",
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Verification email sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Verification email sent"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Email not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Email not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [],
@@ -199,10 +414,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "example": "any"
-                  }
-                }
+                  "email": { "type": "string", "example": "user@example.com" }
+                },
+                "required": ["email"]
               }
             }
           }
@@ -212,40 +426,76 @@
     "/user/": {
       "get": {
         "tags": ["Users"],
-        "description": "",
+        "description": "Retrieves a paginated list of users with optional search",
         "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "name": "page",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 1 }
           },
           {
             "name": "limit",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 10 }
           },
           {
             "name": "search",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "John" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Users fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Users fetched successfully"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "example": "uuid" },
+                          "firstName": { "type": "string", "example": "John" },
+                          "lastName": { "type": "string", "example": "Doe" },
+                          "email": {
+                            "type": "string",
+                            "example": "user@example.com"
+                          }
+                        }
+                      }
+                    },
+                    "total": { "type": "integer", "example": 50 },
+                    "page": { "type": "integer", "example": 1 },
+                    "limit": { "type": "integer", "example": 10 }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Admin access required"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -256,19 +506,53 @@
       },
       "post": {
         "tags": ["Users"],
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "description": "Creates a new user (admin only)",
         "responses": {
-          "default": {
-            "description": ""
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "User created successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "firstName": { "type": "string", "example": "John" },
+                        "lastName": { "type": "string", "example": "Doe" },
+                        "email": {
+                          "type": "string",
+                          "example": "user@example.com"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Admin access required"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -282,19 +566,12 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "firstName": {
-                    "example": "any"
-                  },
-                  "lastName": {
-                    "example": "any"
-                  },
-                  "email": {
-                    "example": "any"
-                  },
-                  "password": {
-                    "example": "any"
-                  }
-                }
+                  "firstName": { "type": "string", "example": "John" },
+                  "lastName": { "type": "string", "example": "Doe" },
+                  "email": { "type": "string", "example": "user@example.com" },
+                  "password": { "type": "string", "example": "Password123!" }
+                },
+                "required": ["firstName", "lastName", "email", "password"]
               }
             }
           }
@@ -304,58 +581,58 @@
     "/user/{id}": {
       "get": {
         "tags": ["Users"],
-        "description": "",
+        "description": "Retrieves a specific user by ID",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": ["Users"],
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
+          "200": {
+            "description": "User fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "User fetched successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "firstName": { "type": "string", "example": "John" },
+                        "lastName": { "type": "string", "example": "Doe" },
+                        "email": {
+                          "type": "string",
+                          "example": "user@example.com"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": { "type": "string", "example": "User not found" }
+                  }
+                }
+              }
             }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": ""
           }
         },
         "security": [
@@ -366,20 +643,58 @@
       },
       "put": {
         "tags": ["Users"],
-        "description": "",
+        "description": "Updates a user’s details",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "User updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "User updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "firstName": { "type": "string", "example": "John" },
+                        "lastName": { "type": "string", "example": "Doe" },
+                        "email": {
+                          "type": "string",
+                          "example": "user@example.com"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": { "type": "string", "example": "User not found" }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -393,52 +708,185 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "firstName": {
-                    "example": "any"
-                  },
-                  "lastName": {
-                    "example": "any"
-                  },
-                  "email": {
-                    "example": "any"
-                  }
+                  "firstName": { "type": "string", "example": "John" },
+                  "lastName": { "type": "string", "example": "Doe" },
+                  "email": { "type": "string", "example": "user@example.com" }
                 }
               }
             }
           }
         }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "description": "Deletes a user by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "User deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": { "type": "string", "example": "User not found" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/parkingSlot-orders/": {
       "get": {
         "tags": ["ParkingSlot Orders"],
-        "description": "",
+        "description": "Retrieves a paginated list of parking slot orders for the authenticated user",
         "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "name": "page",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 1 }
           },
           {
             "name": "limit",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 10 }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Parking slot orders fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot orders fetched successfully"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "example": "uuid" },
+                          "parkingSlotCustomerId": {
+                            "type": "string",
+                            "example": "uuid"
+                          },
+                          "parkingSlotId": {
+                            "type": "string",
+                            "example": "uuid"
+                          },
+                          "vehicleId": { "type": "string", "example": "uuid" },
+                          "pricePerHour": { "type": "number", "example": 5.0 },
+                          "hours": { "type": "integer", "example": 2 },
+                          "parkingSlotOrderStatus": {
+                            "type": "string",
+                            "example": "PENDING"
+                          },
+                          "parkingSlot": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "example": "uuid" },
+                              "parkingSlotNumber": {
+                                "type": "string",
+                                "example": "A1"
+                              },
+                              "parkingSlotSize": {
+                                "type": "string",
+                                "example": "STANDARD"
+                              },
+                              "parking": {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "example": "uuid" },
+                                  "maxSlots": {
+                                    "type": "integer",
+                                    "example": 100
+                                  },
+                                  "slotCategory": {
+                                    "type": "string",
+                                    "example": "STANDARD"
+                                  },
+                                  "pricePerHour": {
+                                    "type": "number",
+                                    "example": 5.0
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "parkingSlotVehicle": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "example": "uuid" },
+                              "vehiclePlateNumber": {
+                                "type": "string",
+                                "example": "ABC123"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "total": { "type": "integer", "example": 20 },
+                    "page": { "type": "integer", "example": 1 },
+                    "limit": { "type": "integer", "example": 10 }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Authentication required"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -449,19 +897,58 @@
       },
       "post": {
         "tags": ["ParkingSlot Orders"],
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "description": "Creates a new parking slot order and sends a confirmation email",
         "responses": {
-          "default": {
-            "description": ""
+          "201": {
+            "description": "Parking slot order created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot order created successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "parkingSlotCustomerId": {
+                          "type": "string",
+                          "example": "uuid"
+                        },
+                        "parkingSlotId": {
+                          "type": "string",
+                          "example": "uuid"
+                        },
+                        "vehicleId": { "type": "string", "example": "uuid" },
+                        "pricePerHour": { "type": "number", "example": 5.0 },
+                        "hours": { "type": "integer", "example": 0 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking slot or vehicle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -475,13 +962,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "parkingSlotId": {
-                    "example": "any"
-                  },
+                  "parkingSlotId": { "type": "string", "example": "uuid" },
                   "vehiclePlateNumber": {
-                    "example": "any"
+                    "type": "string",
+                    "example": "ABC123"
                   }
-                }
+                },
+                "required": ["parkingSlotId", "vehiclePlateNumber"]
               }
             }
           }
@@ -491,27 +978,165 @@
     "/parkingSlot-orders/{id}": {
       "get": {
         "tags": ["ParkingSlot Orders"],
-        "description": "",
+        "description": "Retrieves a specific parking slot order by ID",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Parking slot order fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot order fetched successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "parkingSlotCustomerId": {
+                          "type": "string",
+                          "example": "uuid"
+                        },
+                        "parkingSlotId": {
+                          "type": "string",
+                          "example": "uuid"
+                        },
+                        "vehicleId": { "type": "string", "example": "uuid" },
+                        "pricePerHour": { "type": "number", "example": 5.0 },
+                        "hours": { "type": "integer", "example": 2 },
+                        "parkingSlotOrderStatus": {
+                          "type": "string",
+                          "example": "PENDING"
+                        },
+                        "parkingSlot": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string", "example": "uuid" },
+                            "parkingSlotNumber": {
+                              "type": "string",
+                              "example": "A1"
+                            },
+                            "parkingSlotSize": {
+                              "type": "string",
+                              "example": "STANDARD"
+                            },
+                            "parking": {
+                              "type": "object",
+                              "properties": {
+                                "id": { "type": "string", "example": "uuid" },
+                                "maxSlots": {
+                                  "type": "integer",
+                                  "example": 100
+                                },
+                                "slotCategory": {
+                                  "type": "string",
+                                  "example": "STANDARD"
+                                },
+                                "pricePerHour": {
+                                  "type": "number",
+                                  "example": 5.0
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "parkingSlotVehicle": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string", "example": "uuid" },
+                            "vehiclePlateNumber": {
+                              "type": "string",
+                              "example": "ABC123"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking slot order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot order not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["ParkingSlot Orders"],
+        "description": "Deletes a parking slot order by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parking slot order deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot order deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking slot order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot order not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -524,27 +1149,60 @@
     "/parkingSlot-orders/{id}/status": {
       "patch": {
         "tags": ["ParkingSlot Orders"],
-        "description": "",
+        "description": "Updates the status of a parking slot order",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Parking slot order status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot order status updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "parkingSlotOrderStatus": {
+                          "type": "string",
+                          "example": "COMPLETED"
+                        },
+                        "hours": { "type": "integer", "example": 2 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking slot order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot order not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -559,53 +1217,277 @@
                 "type": "object",
                 "properties": {
                   "status": {
-                    "example": "any"
+                    "type": "string",
+                    "enum": ["PENDING", "COMPLETED"],
+                    "example": "COMPLETED"
                   }
-                }
+                },
+                "required": ["status"]
               }
             }
           }
         }
       }
     },
+    "/parkingSlot-orders/parkingSlot/{id}": {
+      "get": {
+        "tags": ["ParkingSlot Orders"],
+        "description": "Retrieves parking slot orders by parking slot ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "uuid" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "example": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "example": 10 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parking slot orders fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot orders fetched successfully"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "example": "uuid" },
+                          "parkingSlotCustomerId": {
+                            "type": "string",
+                            "example": "uuid"
+                          },
+                          "parkingSlotId": {
+                            "type": "string",
+                            "example": "uuid"
+                          },
+                          "vehicleId": { "type": "string", "example": "uuid" },
+                          "pricePerHour": { "type": "number", "example": 5.0 },
+                          "hours": { "type": "integer", "example": 2 },
+                          "parkingSlotOrderStatus": {
+                            "type": "string",
+                            "example": "PENDING"
+                          },
+                          "parkingSlot": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "example": "uuid" },
+                              "parkingSlotNumber": {
+                                "type": "string",
+                                "example": "A1"
+                              },
+                              "parkingSlotSize": {
+                                "type": "string",
+                                "example": "STANDARD"
+                              },
+                              "parking": {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "example": "uuid" },
+                                  "maxSlots": {
+                                    "type": "integer",
+                                    "example": 100
+                                  },
+                                  "slotCategory": {
+                                    "type": "string",
+                                    "example": "STANDARD"
+                                  },
+                                  "pricePerHour": {
+                                    "type": "number",
+                                    "example": 5.0
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "parkingSlotVehicle": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "example": "uuid" },
+                              "vehiclePlateNumber": {
+                                "type": "string",
+                                "example": "ABC123"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "total": { "type": "integer", "example": 20 },
+                    "page": { "type": "integer", "example": 1 },
+                    "limit": { "type": "integer", "example": 10 }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Authentication required"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/parkingSlot-orders/user/{userId}": {
       "get": {
         "tags": ["ParkingSlot Orders"],
-        "description": "",
+        "description": "Retrieves parking slot orders by user ID",
         "parameters": [
           {
             "name": "userId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           },
           {
             "name": "page",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 1 }
           },
           {
             "name": "limit",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 10 }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Parking slot orders fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot orders fetched successfully"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "example": "uuid" },
+                          "parkingSlotCustomerId": {
+                            "type": "string",
+                            "example": "uuid"
+                          },
+                          "parkingSlotId": {
+                            "type": "string",
+                            "example": "uuid"
+                          },
+                          "vehicleId": { "type": "string", "example": "uuid" },
+                          "pricePerHour": { "type": "number", "example": 5.0 },
+                          "hours": { "type": "integer", "example": 2 },
+                          "parkingSlotOrderStatus": {
+                            "type": "string",
+                            "example": "PENDING"
+                          },
+                          "parkingSlot": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "example": "uuid" },
+                              "parkingSlotNumber": {
+                                "type": "string",
+                                "example": "A1"
+                              },
+                              "parkingSlotSize": {
+                                "type": "string",
+                                "example": "STANDARD"
+                              },
+                              "parking": {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string", "example": "uuid" },
+                                  "maxSlots": {
+                                    "type": "integer",
+                                    "example": 100
+                                  },
+                                  "slotCategory": {
+                                    "type": "string",
+                                    "example": "STANDARD"
+                                  },
+                                  "pricePerHour": {
+                                    "type": "number",
+                                    "example": 5.0
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "parkingSlotVehicle": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "example": "uuid" },
+                              "vehiclePlateNumber": {
+                                "type": "string",
+                                "example": "ABC123"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "total": { "type": "integer", "example": 20 },
+                    "page": { "type": "integer", "example": 1 },
+                    "limit": { "type": "integer", "example": 10 }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Authentication required"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -618,54 +1500,121 @@
     "/parkingSlots/": {
       "get": {
         "tags": ["ParkingSlots"],
-        "description": "",
+        "description": "Retrieves a paginated list of parking slots with optional filters",
         "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "name": "page",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 1 }
           },
           {
             "name": "limit",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 10 }
           },
           {
             "name": "search",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "A1" }
           },
           {
             "name": "parkingSlotSize",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": ["SMALL", "STANDARD", "LARGE"],
+              "example": "STANDARD"
             }
           },
           {
             "name": "parkingSlotStatus",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": ["AVAILABLE", "OCCUPIED"],
+              "example": "AVAILABLE"
             }
+          },
+          {
+            "name": "parkingId",
+            "in": "query",
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Parking slots fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlots fetched successfully"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "example": "uuid" },
+                          "parkingId": { "type": "string", "example": "uuid" },
+                          "parkingSlotNumber": {
+                            "type": "string",
+                            "example": "A1"
+                          },
+                          "parkingSlotSize": {
+                            "type": "string",
+                            "example": "STANDARD"
+                          },
+                          "parkingSlotStatus": {
+                            "type": "string",
+                            "example": "AVAILABLE"
+                          },
+                          "parking": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "example": "uuid" },
+                              "maxSlots": { "type": "integer", "example": 100 },
+                              "slotCategory": {
+                                "type": "string",
+                                "example": "STANDARD"
+                              },
+                              "pricePerHour": {
+                                "type": "number",
+                                "example": 5.0
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "total": { "type": "integer", "example": 50 },
+                    "page": { "type": "integer", "example": 1 },
+                    "limit": { "type": "integer", "example": 10 }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Authentication required"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -676,19 +1625,73 @@
       },
       "post": {
         "tags": ["ParkingSlots"],
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "description": "Creates a new parking slot",
         "responses": {
-          "default": {
-            "description": ""
+          "201": {
+            "description": "Parking slot created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot created successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "parkingId": { "type": "string", "example": "uuid" },
+                        "parkingSlotNumber": {
+                          "type": "string",
+                          "example": "A1"
+                        },
+                        "parkingSlotSize": {
+                          "type": "string",
+                          "example": "STANDARD"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Maximum slots limit reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Maximum slots limit reached for this parking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Parking not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -702,10 +1705,14 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "parkingId": { "type": "string", "example": "uuid" },
                   "parkingSlotSize": {
-                    "example": "any"
+                    "type": "string",
+                    "enum": ["SMALL", "STANDARD", "LARGE"],
+                    "example": "STANDARD"
                   }
-                }
+                },
+                "required": ["parkingId", "parkingSlotSize"]
               }
             }
           }
@@ -715,27 +1722,80 @@
     "/parkingSlots/{id}": {
       "get": {
         "tags": ["ParkingSlots"],
-        "description": "",
+        "description": "Retrieves a specific parking slot by ID",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Parking slot fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot fetched successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "parkingId": { "type": "string", "example": "uuid" },
+                        "parkingSlotNumber": {
+                          "type": "string",
+                          "example": "A1"
+                        },
+                        "parkingSlotSize": {
+                          "type": "string",
+                          "example": "STANDARD"
+                        },
+                        "parkingSlotStatus": {
+                          "type": "string",
+                          "example": "AVAILABLE"
+                        },
+                        "parking": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string", "example": "uuid" },
+                            "maxSlots": { "type": "integer", "example": 100 },
+                            "slotCategory": {
+                              "type": "string",
+                              "example": "STANDARD"
+                            },
+                            "pricePerHour": { "type": "number", "example": 5.0 }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking slot not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -746,27 +1806,68 @@
       },
       "patch": {
         "tags": ["ParkingSlots"],
-        "description": "",
+        "description": "Updates a parking slot’s details",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Parking slot updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "parkingId": { "type": "string", "example": "uuid" },
+                        "parkingSlotNumber": {
+                          "type": "string",
+                          "example": "A1"
+                        },
+                        "parkingSlotSize": {
+                          "type": "string",
+                          "example": "STANDARD"
+                        },
+                        "parkingSlotStatus": {
+                          "type": "string",
+                          "example": "AVAILABLE"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking slot or parking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Parking not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -780,11 +1881,16 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "parkingId": { "type": "string", "example": "uuid" },
                   "parkingSlotSize": {
-                    "example": "any"
+                    "type": "string",
+                    "enum": ["SMALL", "STANDARD", "LARGE"],
+                    "example": "STANDARD"
                   },
                   "parkingSlotStatus": {
-                    "example": "any"
+                    "type": "string",
+                    "enum": ["AVAILABLE", "OCCUPIED"],
+                    "example": "AVAILABLE"
                   }
                 }
               }
@@ -794,27 +1900,49 @@
       },
       "delete": {
         "tags": ["ParkingSlots"],
-        "description": "",
+        "description": "Deletes a parking slot by ID",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Parking slot deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking slot not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlot not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -827,19 +1955,64 @@
     "/parkingSlots/many": {
       "post": {
         "tags": ["ParkingSlots"],
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "description": "Creates multiple parking slots",
         "responses": {
-          "default": {
-            "description": ""
+          "201": {
+            "description": "Parking slots created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "ParkingSlots created successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "count": { "type": "integer", "example": 5 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requested slots exceed maximum limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Requested slots exceed maximum slots limit"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Parking not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -853,13 +2026,19 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "numberOfParkingSlots": {
-                    "example": "any"
-                  },
+                  "parkingId": { "type": "string", "example": "uuid" },
+                  "numberOfParkingSlots": { "type": "integer", "example": 5 },
                   "parkingSlotSize": {
-                    "example": "any"
+                    "type": "string",
+                    "enum": ["SMALL", "STANDARD", "LARGE"],
+                    "example": "STANDARD"
                   }
-                }
+                },
+                "required": [
+                  "parkingId",
+                  "numberOfParkingSlots",
+                  "parkingSlotSize"
+                ]
               }
             }
           }
@@ -869,47 +2048,96 @@
     "/vehicles/": {
       "get": {
         "tags": ["Vehicles"],
-        "description": "",
+        "description": "Retrieves a paginated list of vehicles with optional filters",
         "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "name": "page",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 1 }
           },
           {
             "name": "limit",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 10 }
           },
           {
             "name": "search",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "ABC123" }
           },
           {
             "name": "year",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "integer", "example": 2020 }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Vehicles fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicles fetched successfully"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "example": "uuid" },
+                          "vehiclePlateNumber": {
+                            "type": "string",
+                            "example": "ABC123"
+                          },
+                          "vehicleType": {
+                            "type": "string",
+                            "example": "Sedan"
+                          },
+                          "vehicleColor": {
+                            "type": "string",
+                            "example": "Blue"
+                          },
+                          "vehicleBrand": {
+                            "type": "string",
+                            "example": "Toyota"
+                          },
+                          "vehicleModel": {
+                            "type": "string",
+                            "example": "Camry"
+                          },
+                          "vehicleYear": { "type": "integer", "example": 2020 }
+                        }
+                      }
+                    },
+                    "total": { "type": "integer", "example": 50 },
+                    "page": { "type": "integer", "example": 1 },
+                    "limit": { "type": "integer", "example": 10 }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Admin access required"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -920,19 +2148,59 @@
       },
       "post": {
         "tags": ["Vehicles"],
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "description": "Creates a new vehicle",
         "responses": {
-          "default": {
-            "description": ""
+          "201": {
+            "description": "Vehicle created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicle created successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "vehiclePlateNumber": {
+                          "type": "string",
+                          "example": "ABC123"
+                        },
+                        "vehicleType": { "type": "string", "example": "Sedan" },
+                        "vehicleColor": { "type": "string", "example": "Blue" },
+                        "vehicleBrand": {
+                          "type": "string",
+                          "example": "Toyota"
+                        },
+                        "vehicleModel": {
+                          "type": "string",
+                          "example": "Camry"
+                        },
+                        "vehicleYear": { "type": "integer", "example": 2020 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": { "type": "string", "example": "Invalid input" }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -947,24 +2215,22 @@
                 "type": "object",
                 "properties": {
                   "vehiclePlateNumber": {
-                    "example": "any"
+                    "type": "string",
+                    "example": "ABC123"
                   },
-                  "vehicleType": {
-                    "example": "any"
-                  },
-                  "vehicleColor": {
-                    "example": "any"
-                  },
-                  "vehicleBrand": {
-                    "example": "any"
-                  },
-                  "vehicleModel": {
-                    "example": "any"
-                  },
-                  "vehicleYear": {
-                    "example": "any"
-                  }
-                }
+                  "vehicleType": { "type": "string", "example": "Sedan" },
+                  "vehicleColor": { "type": "string", "example": "Blue" },
+                  "vehicleBrand": { "type": "string", "example": "Toyota" },
+                  "vehicleModel": { "type": "string", "example": "Camry" },
+                  "vehicleYear": { "type": "integer", "example": 2020 }
+                },
+                "required": [
+                  "vehiclePlateNumber",
+                  "vehicleType",
+                  "vehicleBrand",
+                  "vehicleModel",
+                  "vehicleYear"
+                ]
               }
             }
           }
@@ -974,19 +2240,71 @@
     "/vehicles/user": {
       "get": {
         "tags": ["Vehicles"],
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "description": "Retrieves vehicles for the authenticated user",
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Vehicles fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicles fetched successfully"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "example": "uuid" },
+                          "vehiclePlateNumber": {
+                            "type": "string",
+                            "example": "ABC123"
+                          },
+                          "vehicleType": {
+                            "type": "string",
+                            "example": "Sedan"
+                          },
+                          "vehicleColor": {
+                            "type": "string",
+                            "example": "Blue"
+                          },
+                          "vehicleBrand": {
+                            "type": "string",
+                            "example": "Toyota"
+                          },
+                          "vehicleModel": {
+                            "type": "string",
+                            "example": "Camry"
+                          },
+                          "vehicleYear": { "type": "integer", "example": 2020 }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Authentication required"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -999,27 +2317,70 @@
     "/vehicles/{id}": {
       "get": {
         "tags": ["Vehicles"],
-        "description": "",
+        "description": "Retrieves a specific vehicle by ID",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Vehicle fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicle fetched successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "vehiclePlateNumber": {
+                          "type": "string",
+                          "example": "ABC123"
+                        },
+                        "vehicleType": { "type": "string", "example": "Sedan" },
+                        "vehicleColor": { "type": "string", "example": "Blue" },
+                        "vehicleBrand": {
+                          "type": "string",
+                          "example": "Toyota"
+                        },
+                        "vehicleModel": {
+                          "type": "string",
+                          "example": "Camry"
+                        },
+                        "vehicleYear": { "type": "integer", "example": 2020 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Vehicle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicle not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1030,27 +2391,70 @@
       },
       "patch": {
         "tags": ["Vehicles"],
-        "description": "",
+        "description": "Updates a vehicle’s details",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Vehicle updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicle updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "vehiclePlateNumber": {
+                          "type": "string",
+                          "example": "ABC123"
+                        },
+                        "vehicleType": { "type": "string", "example": "Sedan" },
+                        "vehicleColor": { "type": "string", "example": "Blue" },
+                        "vehicleBrand": {
+                          "type": "string",
+                          "example": "Toyota"
+                        },
+                        "vehicleModel": {
+                          "type": "string",
+                          "example": "Camry"
+                        },
+                        "vehicleYear": { "type": "integer", "example": 2020 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Vehicle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicle not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1065,23 +2469,14 @@
                 "type": "object",
                 "properties": {
                   "vehiclePlateNumber": {
-                    "example": "any"
+                    "type": "string",
+                    "example": "ABC123"
                   },
-                  "vehicleType": {
-                    "example": "any"
-                  },
-                  "vehicleColor": {
-                    "example": "any"
-                  },
-                  "vehicleBrand": {
-                    "example": "any"
-                  },
-                  "vehicleModel": {
-                    "example": "any"
-                  },
-                  "vehicleYear": {
-                    "example": "any"
-                  }
+                  "vehicleType": { "type": "string", "example": "Sedan" },
+                  "vehicleColor": { "type": "string", "example": "Blue" },
+                  "vehicleBrand": { "type": "string", "example": "Toyota" },
+                  "vehicleModel": { "type": "string", "example": "Camry" },
+                  "vehicleYear": { "type": "integer", "example": 2020 }
                 }
               }
             }
@@ -1090,27 +2485,49 @@
       },
       "delete": {
         "tags": ["Vehicles"],
-        "description": "",
+        "description": "Deletes a vehicle by ID",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string", "example": "uuid" }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Vehicle deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicle deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Vehicle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicle not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1123,27 +2540,497 @@
     "/vehicles/plate_number/{vehiclePlateNumber}": {
       "get": {
         "tags": ["Vehicles"],
-        "description": "",
+        "description": "Retrieves a vehicle by plate number",
         "parameters": [
           {
             "name": "vehiclePlateNumber",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
+            "schema": { "type": "string", "example": "ABC123" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vehicle fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicle fetched successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "vehiclePlateNumber": {
+                          "type": "string",
+                          "example": "ABC123"
+                        },
+                        "vehicleType": { "type": "string", "example": "Sedan" },
+                        "vehicleColor": { "type": "string", "example": "Blue" },
+                        "vehicleBrand": {
+                          "type": "string",
+                          "example": "Toyota"
+                        },
+                        "vehicleModel": {
+                          "type": "string",
+                          "example": "Camry"
+                        },
+                        "vehicleYear": { "type": "integer", "example": 2020 }
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
+          "404": {
+            "description": "Vehicle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicle not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
           {
-            "name": "authorization",
-            "in": "header",
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/parking/": {
+      "get": {
+        "tags": ["Parking"],
+        "description": "Retrieves a paginated list of parking areas with optional slot category filter",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "example": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "example": 10 }
+          },
+          {
+            "name": "slotCategory",
+            "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": ["SMALL", "STANDARD", "LARGE"],
+              "example": "STANDARD"
             }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Parkings fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Parkings fetched successfully"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "example": "uuid" },
+                          "maxSlots": { "type": "integer", "example": 100 },
+                          "slotCategory": {
+                            "type": "string",
+                            "example": "STANDARD"
+                          },
+                          "pricePerHour": { "type": "number", "example": 5.0 },
+                          "parkingSlots": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": { "type": "string", "example": "uuid" },
+                                "parkingSlotNumber": {
+                                  "type": "string",
+                                  "example": "A1"
+                                },
+                                "parkingSlotSize": {
+                                  "type": "string",
+                                  "example": "STANDARD"
+                                },
+                                "parkingSlotStatus": {
+                                  "type": "string",
+                                  "example": "AVAILABLE"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "total": { "type": "integer", "example": 50 },
+                    "page": { "type": "integer", "example": 1 },
+                    "limit": { "type": "integer", "example": 10 }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Admin access required"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["Parking"],
+        "description": "Creates a new parking area",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["maxSlots", "slotCategory", "pricePerHour"],
+                "properties": {
+                  "maxSlots": { "type": "integer", "example": 100 },
+                  "slotCategory": {
+                    "type": "string",
+                    "enum": ["SMALL", "STANDARD", "LARGE"],
+                    "example": "STANDARD"
+                  },
+                  "pricePerHour": { "type": "number", "example": 5.0 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Parking created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Parking created successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "maxSlots": { "type": "integer", "example": 100 },
+                        "slotCategory": {
+                          "type": "string",
+                          "example": "STANDARD"
+                        },
+                        "pricePerHour": { "type": "number", "example": 5.0 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Admin access required"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/parking/{id}": {
+      "get": {
+        "tags": ["Parking"],
+        "description": "Retrieves a specific parking area by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parking fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Parking fetched successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "maxSlots": { "type": "integer", "example": 100 },
+                        "slotCategory": {
+                          "type": "string",
+                          "example": "STANDARD"
+                        },
+                        "pricePerHour": { "type": "number", "example": 5.0 },
+                        "parkingSlots": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "example": "uuid" },
+                              "parkingSlotNumber": {
+                                "type": "string",
+                                "example": "A1"
+                              },
+                              "parkingSlotSize": {
+                                "type": "string",
+                                "example": "STANDARD"
+                              },
+                              "parkingSlotStatus": {
+                                "type": "string",
+                                "example": "AVAILABLE"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Parking not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Admin access required"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": ["Parking"],
+        "description": "Updates an existing parking area",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["maxSlots", "slotCategory", "pricePerHour"],
+                "properties": {
+                  "maxSlots": { "type": "integer", "example": 100 },
+                  "slotCategory": {
+                    "type": "string",
+                    "enum": ["SMALL", "STANDARD", "LARGE"],
+                    "example": "STANDARD"
+                  },
+                  "pricePerHour": { "type": "number", "example": 5.0 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Parking updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Parking updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "uuid" },
+                        "maxSlots": { "type": "integer", "example": 100 },
+                        "slotCategory": {
+                          "type": "string",
+                          "example": "MEDIUM"
+                        },
+                        "pricePerHour": { "type": "number", "example": 5.0 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Admin access required"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Parking"],
+        "description": "Deletes a parking area",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parking deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": {
+                      "type": "string",
+                      "example": "Parking deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "message": {
+                      "type": "string",
+                      "example": "Admin access required"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1153,19 +3040,5 @@
         ]
       }
     }
-  },
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "apiKey",
-        "name": "authorization",
-        "in": "header"
-      }
-    }
-  },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ]
+  }
 }
